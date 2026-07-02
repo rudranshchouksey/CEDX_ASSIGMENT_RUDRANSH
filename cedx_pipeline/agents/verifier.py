@@ -21,6 +21,7 @@ When a check fails, the verifier emits ``AGENT_HALLUCINATION`` or
 
 from __future__ import annotations
 
+import json
 import logging
 import re
 import time
@@ -33,6 +34,7 @@ from cedx_pipeline.agents.contracts import (
     VerifierVerdict,
     WorkerDraft,
 )
+from cedx_pipeline.agents.model_router import ModelGateway
 from cedx_pipeline.agents.trace import SpanCollector, TraceSpan
 from cedx_pipeline.config import MODEL_COST_PER_1K_TOKENS
 from cedx_pipeline.intake.registry import Record
@@ -82,8 +84,9 @@ class VerifierAgent(AgentContract):
 
     # ── Constructor ──────────────────────────────────────────────────────
 
-    def __init__(self, collector: SpanCollector) -> None:
+    def __init__(self, collector: SpanCollector, gateway: ModelGateway) -> None:
         self._collector = collector
+        self._gateway = gateway
 
     # ── Core Execution ───────────────────────────────────────────────────
 
@@ -157,14 +160,17 @@ class VerifierAgent(AgentContract):
             verdict = VerifierVerdict.PASS
             reason = "Draft passed all validation checks."
 
-        elapsed_ms = (time.monotonic() - start) * 1000.0
+        # ── Intercept via Gateway (for Replay/Record) ────────────────────
+        prompt = f"Verify draft for record {record.id} against source:\n{record}\nDraft:\n{draft.assembly}"
+        simulated_response = json.dumps({"verdict": verdict.value, "reason": reason})
 
-        # ── Simulate verifier model cost ─────────────────────────────────
-        # The verifier "runs" its own model for cross-checking.
-        tokens_in = max(1, len(str(draft.assembly)) // 4)
-        tokens_out = max(1, len(reason) // 4)
-        rate = MODEL_COST_PER_1K_TOKENS.get(ModelId.CLAUDE_SONNET.value, 0.012)
-        cost_usd = round(rate * (tokens_in + tokens_out) / 1000.0, 6)
+        gateway_result = self._gateway.infer(
+            agent=self.name,
+            model=ModelId.CLAUDE_SONNET,
+            prompt=prompt,
+            record=record,
+            simulated_response=simulated_response,
+        )
 
         # ── Record trace span (with verdict) ─────────────────────────────
         span = TraceSpan(
@@ -172,10 +178,10 @@ class VerifierAgent(AgentContract):
             agent=self.name,
             model=ModelId.CLAUDE_SONNET.value,
             prompt_version=_PROMPT_VERSION,
-            tokens_in=tokens_in,
-            tokens_out=tokens_out,
-            cost_usd=cost_usd,
-            latency_ms=round(elapsed_ms, 2),
+            tokens_in=gateway_result.tokens_in,
+            tokens_out=gateway_result.tokens_out,
+            cost_usd=gateway_result.cost_usd,
+            latency_ms=gateway_result.latency_ms,
             retries=retry_count,
             status="success",
             verdict=verdict,
@@ -199,9 +205,9 @@ class VerifierAgent(AgentContract):
             reason=reason,
             issues=issues,
             model_used=ModelId.CLAUDE_SONNET,
-            tokens_in=tokens_in,
-            tokens_out=tokens_out,
-            cost_usd=cost_usd,
-            latency_ms=round(elapsed_ms, 2),
+            tokens_in=gateway_result.tokens_in,
+            tokens_out=gateway_result.tokens_out,
+            cost_usd=gateway_result.cost_usd,
+            latency_ms=gateway_result.latency_ms,
             prompt_version=_PROMPT_VERSION,
         )

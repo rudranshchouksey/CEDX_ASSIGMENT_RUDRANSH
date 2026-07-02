@@ -119,7 +119,7 @@ class WorkerAgent(AgentContract):
         prompt = self._build_prompt(record, context)
 
         # ── 3. Inference ─────────────────────────────────────────────────
-        result = self._gateway.infer(model, prompt, record)
+        result = self._gateway.infer(self.name, model, prompt, record)
 
         # ── 4. Parse assembly from output ────────────────────────────────
         try:

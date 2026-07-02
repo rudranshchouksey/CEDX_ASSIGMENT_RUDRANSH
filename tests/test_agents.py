@@ -150,7 +150,7 @@ class TestVerifierAgent:
 
     def test_approves_clean_draft(self) -> None:
         collector = SpanCollector()
-        verifier = VerifierAgent(collector)
+        verifier = VerifierAgent(collector, ModelGateway())
         record = _make_record()
         draft = WorkerDraft(
             record_id=record.id,
@@ -175,7 +175,7 @@ class TestVerifierAgent:
 
     def test_rejects_hallucinated_amount(self) -> None:
         collector = SpanCollector()
-        verifier = VerifierAgent(collector)
+        verifier = VerifierAgent(collector, ModelGateway())
         record = _make_record(amount=Decimal("15000"))
         draft = WorkerDraft(
             record_id=record.id,
@@ -200,7 +200,7 @@ class TestVerifierAgent:
 
     def test_rejects_mismatched_record_id(self) -> None:
         collector = SpanCollector()
-        verifier = VerifierAgent(collector)
+        verifier = VerifierAgent(collector, ModelGateway())
         record = _make_record(id="REAL-ID")
         draft = WorkerDraft(
             record_id="REAL-ID",
@@ -224,7 +224,7 @@ class TestVerifierAgent:
 
     def test_rejects_empty_draft(self) -> None:
         collector = SpanCollector()
-        verifier = VerifierAgent(collector)
+        verifier = VerifierAgent(collector, ModelGateway())
         record = _make_record()
         draft = WorkerDraft(
             record_id=record.id,
@@ -243,7 +243,7 @@ class TestVerifierAgent:
 
     def test_span_includes_verdict(self) -> None:
         collector = SpanCollector()
-        verifier = VerifierAgent(collector)
+        verifier = VerifierAgent(collector, ModelGateway())
         record = _make_record(id="VERDICT-TEST")
         draft = WorkerDraft(
             record_id=record.id,

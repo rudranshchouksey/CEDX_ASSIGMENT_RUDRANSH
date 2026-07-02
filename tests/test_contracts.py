@@ -37,7 +37,7 @@ def worker(collector: SpanCollector) -> WorkerAgent:
 
 @pytest.fixture()
 def verifier(collector: SpanCollector) -> VerifierAgent:
-    return VerifierAgent(collector)
+    return VerifierAgent(collector, ModelGateway())
 
 
 @pytest.fixture()

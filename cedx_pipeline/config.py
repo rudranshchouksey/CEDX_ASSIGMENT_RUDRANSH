@@ -63,6 +63,15 @@ MODEL_COST_PER_1K_TOKENS: dict[str, float] = {
     "claude-sonnet-4": 0.012,
 }
 
+# ── Phase 3 Constants ────────────────────────────────────────────────────────
+
+#: Directory for storing and retrieving LLM transcripts.
+TRANSCRIPTS_DIR: Path = Path(os.environ.get("TRANSCRIPTS_DIR", "./transcripts")).resolve()
+
+#: If true, intercept LLM interactions and replay from transcripts.
+REPLAY_LLM: bool = os.environ.get("REPLAY_LLM", "false").strip().lower() == "true"
+
+
 
 # ── Environment Readers ──────────────────────────────────────────────────────
 

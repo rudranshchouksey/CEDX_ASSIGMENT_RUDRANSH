@@ -30,8 +30,10 @@ from dataclasses import dataclass
 from typing import Any
 
 from cedx_pipeline.agents.contracts import ModelId
-from cedx_pipeline.config import MODEL_COST_PER_1K_TOKENS
+from cedx_pipeline.agents.transcript import TranscriptBundle
+from cedx_pipeline.config import MODEL_COST_PER_1K_TOKENS, REPLAY_LLM, TRANSCRIPTS_DIR
 from cedx_pipeline.detectors.models import AnomalyType
+from cedx_pipeline.errors import MissingTranscriptError
 from cedx_pipeline.intake.registry import Record
 
 logger = logging.getLogger(__name__)
@@ -72,9 +74,11 @@ class ModelGateway:
 
     def infer(
         self,
+        agent: str,
         model: ModelId,
         prompt: str,
         record: Record,
+        simulated_response: str | None = None,
     ) -> InferenceResult:
         """Run (simulated) inference and return the result.
 
@@ -85,18 +89,27 @@ class ModelGateway:
             * Adds a small simulated latency based on model tier.
 
         Args:
+            agent:  The name of the agent calling inference.
             model:  The model to invoke.
             prompt: The formatted prompt string.
             record: The source record (used for deterministic output).
+            simulated_response: If provided, bypasses the internal simulation
+                                (useful for verifier verdicts).
 
         Returns:
             An :class:`InferenceResult` with simulated metrics.
         """
         start = time.monotonic()
 
+        if REPLAY_LLM:
+            return self._replay_inference(agent, model, prompt)
+
         # ── Deterministic simulated output ───────────────────────────────
-        assembly = self._build_simulated_assembly(record)
-        output_text = json.dumps(assembly, indent=2)
+        if simulated_response is not None:
+            output_text = simulated_response
+        else:
+            assembly = self._build_simulated_assembly(record)
+            output_text = json.dumps(assembly, indent=2)
 
         # ── Token estimation (1 token ≈ 4 chars) ────────────────────────
         tokens_in = max(1, len(prompt) // 4)
@@ -108,12 +121,57 @@ class ModelGateway:
 
         elapsed_ms = (time.monotonic() - start) * 1000.0
 
-        return InferenceResult(
+        result = InferenceResult(
             output=output_text,
             tokens_in=tokens_in,
             tokens_out=tokens_out,
             cost_usd=round(cost_usd, 6),
             latency_ms=round(elapsed_ms, 2),
+        )
+
+        # ── Save Transcript ──────────────────────────────────────────────
+        response_hash = hashlib.sha256(output_text.encode("utf-8")).hexdigest()
+        bundle = TranscriptBundle(
+            request=prompt,
+            raw_response=output_text,
+            response_hash=response_hash,
+            model=model.value,
+            prompt_version="1.0.0",
+            agent=agent,
+        )
+        bundle.save(TRANSCRIPTS_DIR)
+
+        return result
+
+    def _replay_inference(
+        self, agent: str, model: ModelId, prompt: str
+    ) -> InferenceResult:
+        """Scan transcripts and return a matched InferenceResult."""
+        if not TRANSCRIPTS_DIR.exists():
+            raise MissingTranscriptError(
+                f"Transcripts directory {TRANSCRIPTS_DIR} does not exist."
+            )
+
+        for path in TRANSCRIPTS_DIR.glob("*.json"):
+            try:
+                bundle = TranscriptBundle.load(path)
+                if bundle.request == prompt and bundle.agent == agent:
+                    tokens_in = max(1, len(prompt) // 4)
+                    tokens_out = max(1, len(bundle.raw_response) // 4)
+                    rate = MODEL_COST_PER_1K_TOKENS.get(bundle.model, 0.005)
+                    cost_usd = rate * (tokens_in + tokens_out) / 1000.0
+                    return InferenceResult(
+                        output=bundle.raw_response,
+                        tokens_in=tokens_in,
+                        tokens_out=tokens_out,
+                        cost_usd=round(cost_usd, 6),
+                        latency_ms=10.0,
+                    )
+            except Exception as e:
+                logger.warning("Failed to load transcript %s: %s", path, e)
+
+        raise MissingTranscriptError(
+            f"No transcript found for agent '{agent}' matching the prompt."
         )
 
     @staticmethod

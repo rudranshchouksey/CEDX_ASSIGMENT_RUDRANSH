@@ -1,0 +1,8 @@
+{
+  "request": "Verify draft for record REAL-ID against source:\nRecord(id='REAL-ID', owner='tester@example.com', deadline='2027-06-01', amount=Decimal('15000'), payload={'project': 'Test'}, notes='Standard record.', source_format='feed', source_version_hash='abc123def456')\nDraft:\n{'record_id': 'WRONG-ID', 'owner': 'tester@example.com', 'deadline': '2027-06-01', 'amount': '15000'}",
+  "raw_response": "{\"verdict\": \"fail\", \"reason\": \"Verifier found 1 issue(s).\"}",
+  "response_hash": "5df33aed048b6f8d6677a3d0ef0571bf11537383b3e93c0a98db5e15312d3d69",
+  "model": "claude-sonnet-4",
+  "prompt_version": "1.0.0",
+  "agent": "verifier"
+}

@@ -120,7 +120,7 @@ class OrchestratorAgent(AgentContract):
         self._gateway = ModelGateway()
         self._router = ModelRouter()
         self._worker = WorkerAgent(self._gateway, self._router, self._collector)
-        self._verifier = VerifierAgent(self._collector)
+        self._verifier = VerifierAgent(self._collector, self._gateway)
         self._approved = ApprovedQueue()
         self._exceptions = ExceptionQueue()
 

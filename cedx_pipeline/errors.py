@@ -72,3 +72,8 @@ class VerifierRejectionError(AgentError):
     """The verifier rejected the worker's draft after all retries were
     exhausted."""
 
+
+class MissingTranscriptError(AgentError):
+    """A required transcript was not found during offline replay mode."""
+
+

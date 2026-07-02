@@ -1,0 +1,8 @@
+{
+  "request": "=== CEDX Assembly Draft Prompt v1.0.0 ===\nRecord ID: ANOM-001\nOwner: tester@example.com\nDeadline: 2027-06-01\nAmount: 15000\nSource: feed\nNotes: Standard record.\nAnomalies detected: STALE, MISSING_INPUT, OUTLIER\nPast failures: 0\nRegulatory role: legal_counsel\nFinancial threshold: 16000\n\nProduce a structured assembly payload for governance review.",
+  "raw_response": "{\n  \"record_id\": \"ANOM-001\",\n  \"owner\": \"tester@example.com\",\n  \"deadline\": \"2027-06-01\",\n  \"amount\": \"15000\",\n  \"summary\": \"Processed record ANOM-001 from feed source.\",\n  \"source_hash\": \"abc123def456\",\n  \"assembly_version\": \"1.0.0\"\n}",
+  "response_hash": "211dadcf6ce7ca7592f14cdd92d56df6cb73c0ebe1917fed58efcfab36504a46",
+  "model": "gemini-1.5-pro",
+  "prompt_version": "1.0.0",
+  "agent": "worker"
+}
