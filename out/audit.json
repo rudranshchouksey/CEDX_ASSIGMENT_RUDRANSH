@@ -1,0 +1,18 @@
+{
+  "agents": [
+    "orchestrator",
+    "worker",
+    "verifier",
+    "router"
+  ],
+  "cost": 0,
+  "amendment": {
+    "case_id": "CEDX-TESTID",
+    "role": "legal_counsel",
+    "threshold": 15000,
+    "digest": "1cda3271c71af402ae278f8a477502104298c44909acc4001c830d90185c17d2"
+  },
+  "output_package_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "events": [],
+  "agent_trace": {}
+}

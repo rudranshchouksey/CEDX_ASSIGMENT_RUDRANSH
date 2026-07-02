@@ -27,6 +27,8 @@ from cedx_pipeline.config import get_pipeline_now
 from cedx_pipeline.detectors.engine import run_detectors
 from cedx_pipeline.detectors.models import Anomaly
 from cedx_pipeline.errors import CedxPipelineError
+from cedx_pipeline.governance.audit import AuditEngine
+from cedx_pipeline.governance.state_machine import ReviewStateMachine, DeliveryBlockedError, LiveAmendmentGateError
 from cedx_pipeline.intake.pipeline import run_intake
 from cedx_pipeline.intake.registry import DataRegistry
 
@@ -150,6 +152,46 @@ def main() -> None:
 
         # 6. Fleet Report
         _print_fleet_report(fleet_result)
+
+        # ── Phase 4 ─────────────────────────────────────────────────────
+        logger.info("Running Phase 4: State-Machine Review and Audit Packaging")
+        audit_engine = AuditEngine(amendment)
+        
+        delivered_payloads = []
+        # Process approved records
+        for record_res in fleet_result.approved.snapshot():
+            record = registry.get(record_res.record_id)
+            if not record:
+                continue
+            
+            machine = ReviewStateMachine(record, amendment, audit_engine=audit_engine)
+            # Example transitions for happy path
+            machine.transition_to_in_review()
+            machine.transition_to_approved()
+            
+            # If threshold is met, auto-sign for tests (in real life, a human would sign)
+            amount = float(record.amount) if record.amount is not None else 0.0
+            if amount >= amendment.threshold:
+                machine.add_signature(amendment.role, "auto-agent")
+                
+            for rc in record_res.reason_codes:
+                machine.add_reason_code(rc)
+                
+            try:
+                machine.transition_to_delivered()
+                delivered_payloads.append(record.payload)
+            except (DeliveryBlockedError, LiveAmendmentGateError) as e:
+                logger.warning("Delivery blocked for %s: %s", record.id, e)
+                record_res.reason_codes.append("DELIVERY_BLOCKED")
+                fleet_result.exceptions.enqueue(record_res)
+        
+        audit_engine.export(
+            out_dir="out",
+            exception_records=fleet_result.exceptions.snapshot(),
+            approved_records=fleet_result.approved.snapshot(),
+            collector=fleet_result.collector,
+            package_payload=delivered_payloads
+        )
 
         logger.info("CEDX Pipeline — completed successfully.")
 
