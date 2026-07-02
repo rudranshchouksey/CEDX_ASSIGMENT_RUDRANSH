@@ -9,6 +9,9 @@ description = "CEDX Multi-Agent Data Governance Pipeline — Phase 1"
 requires-python = ">=3.11"
 dependencies = [
     "pdfplumber>=0.10.0,<1.0",
+    "jsonschema>=4.0.0",
+    "fastapi>=0.100.0",
+    "uvicorn>=0.23.0",
 ]
 
 [project.optional-dependencies]
