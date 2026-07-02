@@ -36,14 +36,58 @@ state = MockState()
 def bootstrap_state():
     """Load mock data or parse from out/audit.json if available locally."""
     try:
-        # 1. Init amendment
-        # Use a fake CASE_ID if not present, to ensure Vercel doesn't crash on boot
         if not os.environ.get("CASE_ID"):
             os.environ["CASE_ID"] = "CEDX-VERCEL-1234"
         state.amendment = init_amendment()
 
-        # 2. Try to load from audit.json
         audit_path = Path("out/audit.json")
+        
+        # Populate realistic mock state first for Vercel demo robustness
+        state.records = {
+            "REC-001": {
+                "id": "REC-001", "state": ReviewState.APPROVED.value, "amount": 25000.0, 
+                "reason_codes": [],
+                "lineage": {"owner": "Alice", "deadline": "2026-10-31", "source_format": "json", "source_hash": "a1b2c3d4"},
+                "agent_trace": [
+                    {"agent": "orchestrator", "model": "none", "tokens_in": 0, "tokens_out": 0, "cost_usd": 0.0, "latency_ms": 1.2, "verdict": "N/A"},
+                    {"agent": "worker", "model": "gemini-1.5-flash", "tokens_in": 150, "tokens_out": 50, "cost_usd": 0.015, "latency_ms": 250.0, "verdict": "N/A"},
+                    {"agent": "verifier", "model": "gemini-1.5-flash", "tokens_in": 200, "tokens_out": 10, "cost_usd": 0.02, "latency_ms": 150.0, "verdict": "PASS"}
+                ]
+            },
+            "REC-002": {
+                "id": "REC-002", "state": ReviewState.CHANGES_REQUESTED.value, "amount": 100.0, 
+                "reason_codes": [],
+                "lineage": {"owner": "Bob", "deadline": "2026-11-15", "source_format": "pdf", "source_hash": "f9e8d7c6"},
+                "agent_trace": [
+                    {"agent": "worker", "model": "gemini-1.5-flash", "tokens_in": 500, "tokens_out": 100, "cost_usd": 0.05, "latency_ms": 400.0, "verdict": "N/A"},
+                    {"agent": "verifier", "model": "gemini-1.5-flash", "tokens_in": 600, "tokens_out": 20, "cost_usd": 0.06, "latency_ms": 300.0, "verdict": "PASS"}
+                ]
+            },
+            "REC-003": {
+                "id": "REC-003", "state": ReviewState.IN_REVIEW.value, "amount": 500.0, 
+                "reason_codes": ["AGENT_HALLUCINATION"],
+                "lineage": {"owner": "Charlie", "deadline": "2026-12-01", "source_format": "eml", "source_hash": "deadbeef"},
+                "agent_trace": [
+                    {"agent": "worker", "model": "gemini-1.5-pro", "tokens_in": 1000, "tokens_out": 200, "cost_usd": 0.15, "latency_ms": 800.0, "verdict": "N/A"},
+                    {"agent": "verifier", "model": "gemini-1.5-flash", "tokens_in": 1200, "tokens_out": 50, "cost_usd": 0.12, "latency_ms": 200.0, "verdict": "FAIL", "issues": ["AGENT_HALLUCINATION"]}
+                ]
+            },
+            "REC-004": {
+                "id": "REC-004", "state": ReviewState.DELIVERED.value, "amount": 75000.0, 
+                "reason_codes": [],
+                "lineage": {"owner": "Diana", "deadline": "2026-10-01", "source_format": "json", "source_hash": "11223344"},
+                "agent_trace": [
+                    {"agent": "worker", "model": "gemini-1.5-flash", "tokens_in": 100, "tokens_out": 30, "cost_usd": 0.01, "latency_ms": 100.0, "verdict": "N/A"},
+                    {"agent": "verifier", "model": "gemini-1.5-flash", "tokens_in": 130, "tokens_out": 10, "cost_usd": 0.013, "latency_ms": 90.0, "verdict": "PASS"}
+                ]
+            }
+        }
+        state.stats["total_processed"] = 4
+        state.stats["total_cost"] = 0.438
+        state.stats["p95_latency"] = 780.0
+        state.stats["avg_cost"] = 0.438 / 4
+
+        # Override with real data if available locally
         if audit_path.exists():
             with open(audit_path, "r", encoding="utf-8") as f:
                 audit_data = json.load(f)
@@ -51,29 +95,31 @@ def bootstrap_state():
             state.events = audit_data.get("events", [])
             state.stats["total_cost"] = audit_data.get("cost_metrics", {}).get("total_usd", 0.0)
             
-            # Since audit.json doesn't store the raw records directly outside of the package payload,
-            # we can reconstruct minimal record states from agent_trace or events.
-            # But for a robust dashboard, let's mock some structured data if it's missing.
+            real_records = {}
+            all_latencies = []
             
-            # Let's populate some mock records based on events or inject static ones for UI purposes
             for trace_id, traces in audit_data.get("agent_trace", {}).items():
-                state.records[trace_id] = {
+                for t in traces:
+                    if "latency_ms" in t:
+                        all_latencies.append(t["latency_ms"])
+                
+                real_records[trace_id] = {
                     "id": trace_id,
                     "state": ReviewState.APPROVED.value,
-                    "amount": 50000.0, # Dummy high value
+                    "amount": 50000.0, # Placeholder if not found in feed
                     "reason_codes": [],
+                    "lineage": {"owner": "System", "deadline": "N/A", "source_format": "unknown", "source_hash": "N/A"},
+                    "agent_trace": traces
                 }
-                state.stats["total_processed"] += 1
-                
-        if not state.records:
-            # Fallback mock state for Vercel
-            state.records = {
-                "REC-001": {"id": "REC-001", "state": ReviewState.APPROVED.value, "amount": 25000.0, "reason_codes": []},
-                "REC-002": {"id": "REC-002", "state": ReviewState.CHANGES_REQUESTED.value, "amount": 100.0, "reason_codes": []},
-                "REC-003": {"id": "REC-003", "state": ReviewState.IN_REVIEW.value, "amount": 500.0, "reason_codes": ["AGENT_HALLUCINATION"]},
-            }
-            state.stats["total_processed"] = 3
-            state.stats["total_cost"] = 0.015
+            
+            if real_records:
+                state.records = real_records
+                state.stats["total_processed"] = len(real_records)
+                state.stats["avg_cost"] = state.stats["total_cost"] / len(real_records) if len(real_records) > 0 else 0
+                if all_latencies:
+                    all_latencies.sort()
+                    idx = int(len(all_latencies) * 0.95)
+                    state.stats["p95_latency"] = all_latencies[idx]
 
     except Exception as e:
         logger.error(f"Failed to bootstrap state: {e}")
@@ -92,14 +138,33 @@ async def get_status():
         "case_id": state.amendment.case_id,
         "role": state.amendment.role,
         "threshold": state.amendment.threshold,
-        "total_processed": state.stats["total_processed"],
-        "total_cost": state.stats["total_cost"]
+        "total_processed": state.stats.get("total_processed", 0),
+        "total_cost": state.stats.get("total_cost", 0.0),
+        "avg_cost": state.stats.get("avg_cost", 0.0),
+        "p95_latency": state.stats.get("p95_latency", 0.0),
+        "replay_llm": state.stats.get("replay_llm", True)
     }
-
 
 @app.get("/api/records")
 async def get_records():
-    return list(state.records.values())
+    # Return minimal record listing for the left pane
+    return [{"id": r["id"], "state": r["state"], "amount": r["amount"], "reason_codes": r.get("reason_codes", [])} for r in state.records.values()]
+
+@app.get("/api/records/{record_id}")
+async def get_record(record_id: str):
+    # Deep dive payload for the right pane
+    record = state.records.get(record_id)
+    if not record:
+        raise HTTPException(status_code=404, detail="Record not found")
+    return record
+
+class SettingsPayload(BaseModel):
+    replay_llm: bool
+
+@app.post("/api/settings")
+async def update_settings(payload: SettingsPayload):
+    state.stats["replay_llm"] = payload.replay_llm
+    return {"status": "success", "replay_llm": payload.replay_llm}
 
 
 class ReviewAction(BaseModel):
