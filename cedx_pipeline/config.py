@@ -42,6 +42,27 @@ DEFAULT_SEED_DIR: str = "/app/seed"
 #: Mandatory record fields that must be non-null.
 MANDATORY_FIELDS: tuple[str, ...] = ("id", "owner", "deadline", "amount")
 
+# ── Agent System Constants ───────────────────────────────────────────────────
+
+#: Maximum execution steps (worker + verifier calls) allowed per record.
+MAX_STEPS_PER_RECORD: int = 6
+
+#: Maximum cumulative inference cost (USD) allowed per record.
+MAX_COST_USD_PER_RECORD: float = 0.50
+
+#: Maximum number of worker retries after verifier rejection before
+#: escalating to ``needs_human``.
+MAX_WORKER_RETRIES: int = 2
+
+#: Cost per 1,000 tokens for each authorized model (simulated gateway).
+MODEL_COST_PER_1K_TOKENS: dict[str, float] = {
+    "gemini-1.5-flash": 0.001,
+    "gpt-4o-mini": 0.002,
+    "gemini-1.5-pro": 0.008,
+    "gpt-4o": 0.010,
+    "claude-sonnet-4": 0.012,
+}
+
 
 # ── Environment Readers ──────────────────────────────────────────────────────
 

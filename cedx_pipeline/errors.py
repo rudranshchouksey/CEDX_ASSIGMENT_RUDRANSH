@@ -50,3 +50,25 @@ class RegistryError(CedxPipelineError):
 
 class DuplicateRecordError(RegistryError):
     """A record with the same ``id`` already exists in the registry."""
+
+
+# ── Agent System ────────────────────────────────────────────────────────────
+
+
+class AgentError(CedxPipelineError):
+    """Base error for the multi-agent subsystem."""
+
+
+class AgentContractViolation(AgentError):
+    """An agent attempted to call another agent not in its ``can_call``
+    whitelist."""
+
+
+class BudgetExceededError(AgentError):
+    """A record exceeded its per-record cost or step budget."""
+
+
+class VerifierRejectionError(AgentError):
+    """The verifier rejected the worker's draft after all retries were
+    exhausted."""
+

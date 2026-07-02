@@ -1,11 +1,15 @@
-"""CEDX Pipeline — Phase 1 entrypoint.
+"""CEDX Pipeline — Phase 1 + Phase 2 entrypoint.
 
-Orchestrates the three subsystems in sequence:
+Orchestrates the full pipeline in sequence:
 
-    1. **Amendment Core** — derive regulatory role & threshold from CASE_ID.
-    2. **Intake Pipeline** — ingest feed, EML, and PDF sources into registry.
-    3. **Detection Engine** — run anomaly & injection detectors over the
-       registry snapshot.
+    **Phase 1:**
+    1. Cryptographic Amendment Core — derive role & threshold from CASE_ID.
+    2. Resilient Intake Pipeline — ingest feed, EML, and PDF into registry.
+    3. Detection Engine — anomaly & injection detectors.
+
+    **Phase 2:**
+    4. Multi-Agent Fleet — orchestrator → worker → verifier loop with
+       budget enforcement, model routing, and observability tracing.
 
 Exit codes:
     * ``0`` — pipeline completed (anomalies may or may not be present).
@@ -17,6 +21,7 @@ from __future__ import annotations
 import logging
 import sys
 
+from cedx_pipeline.agents.orchestrator import FleetResult, OrchestratorAgent
 from cedx_pipeline.amendment import Amendment, init_amendment
 from cedx_pipeline.config import get_pipeline_now
 from cedx_pipeline.detectors.engine import run_detectors
@@ -63,6 +68,47 @@ def _print_anomaly_report(anomalies: list[Anomaly]) -> None:
     logger.info("=" * 72)
 
 
+def _print_fleet_report(result: FleetResult) -> None:
+    """Emit a human-readable fleet execution summary to stdout."""
+    logger.info("=" * 72)
+    logger.info("AGENT FLEET REPORT")
+    logger.info("=" * 72)
+
+    logger.info(
+        "  Approved: %d | Exceptions: %d",
+        result.approved.count(),
+        result.exceptions.count(),
+    )
+
+    # ── Per-record details ───────────────────────────────────────────────
+    for rr in result.record_results:
+        reason_str = ", ".join(rr.reason_codes) if rr.reason_codes else "none"
+        model_str = rr.draft.model_used.value if rr.draft else "n/a"
+        logger.info(
+            "  record=%-30s state=%-12s model=%-20s retries=%d "
+            "cost=$%.6f steps=%d reasons=[%s]",
+            rr.record_id,
+            rr.state.value,
+            model_str,
+            rr.retries,
+            rr.total_cost,
+            rr.total_steps,
+            reason_str,
+        )
+
+    # ── Observability summary ────────────────────────────────────────────
+    summary = result.collector.summary()
+    logger.info("  --- Trace Summary ---")
+    logger.info("  Total spans: %d", summary["total_spans"])
+    logger.info("  Total cost:  $%.6f", summary["total_cost_usd"])
+    logger.info("  Tokens in:   %d", summary["total_tokens_in"])
+    logger.info("  Tokens out:  %d", summary["total_tokens_out"])
+    logger.info("  Models used: %s", ", ".join(summary["models_used"]))
+    logger.info("  Agents:      %s", ", ".join(summary["agents_active"]))
+
+    logger.info("=" * 72)
+
+
 def main() -> None:
     """Top-level pipeline entrypoint.
 
@@ -70,10 +116,12 @@ def main() -> None:
     ``python -m cedx_pipeline.main``.
     """
     _configure_logging()
-    logger.info("CEDX Pipeline Phase 1 — starting.")
+    logger.info("CEDX Pipeline — starting (Phase 1 + Phase 2).")
 
     try:
-        # ── 1. Cryptographic Amendment ───────────────────────────────────
+        # ── Phase 1 ─────────────────────────────────────────────────────
+
+        # 1. Cryptographic Amendment
         amendment: Amendment = init_amendment()
         logger.info(
             "Amendment initialised: case_id=%s role=%s threshold=%d",
@@ -82,18 +130,28 @@ def main() -> None:
             amendment.threshold,
         )
 
-        # ── 2. Resilient Intake ──────────────────────────────────────────
+        # 2. Resilient Intake
         registry: DataRegistry = run_intake()
         logger.info("Intake complete: %d record(s) registered.", registry.count())
 
-        # ── 3. Detection Engine ──────────────────────────────────────────
+        # 3. Detection Engine
         pipeline_now = get_pipeline_now()
         anomalies: list[Anomaly] = run_detectors(registry, pipeline_now)
 
-        # ── 4. Report ────────────────────────────────────────────────────
+        # 4. Anomaly Report
         _print_anomaly_report(anomalies)
 
-        logger.info("CEDX Pipeline Phase 1 — completed successfully.")
+        # ── Phase 2 ─────────────────────────────────────────────────────
+
+        # 5. Multi-Agent Fleet
+        logger.info("Initialising multi-agent fleet (Phase 2).")
+        orchestrator = OrchestratorAgent(registry, anomalies, amendment)
+        fleet_result: FleetResult = orchestrator.run()
+
+        # 6. Fleet Report
+        _print_fleet_report(fleet_result)
+
+        logger.info("CEDX Pipeline — completed successfully.")
 
     except CedxPipelineError as exc:
         logger.error("Pipeline failed: %s", exc)
