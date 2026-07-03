@@ -101,12 +101,12 @@ export default function Dashboard() {
 
   const getBadgeStyle = (state?: string) => {
     const styles: any = {
-      'draft': 'bg-slate-100 text-slate-500 border border-slate-200',
-      'in_review': 'bg-blue-50 text-blue-600 border border-blue-200',
-      'changes_requested': 'bg-yellow-50 text-yellow-600 border border-yellow-200',
-      'approved': 'bg-emerald-50 text-emerald-600 border border-emerald-200',
-      'delivered': 'bg-emerald-100 text-emerald-700 border border-emerald-300',
-      'exception': 'bg-red-50 text-red-600 border border-red-200'
+      'draft': 'bg-slate-100 text-slate-500 border border-slate-200/60',
+      'in_review': 'bg-blue-50 text-blue-600 border border-blue-200/60',
+      'changes_requested': 'bg-yellow-50 text-yellow-600 border border-yellow-200/60',
+      'approved': 'bg-emerald-50 text-emerald-600 border border-emerald-200/60',
+      'delivered': 'bg-emerald-100 text-emerald-700 border border-emerald-300/60',
+      'exception': 'bg-red-50 text-red-600 border border-red-200/60'
     };
     return styles[state || 'draft'] || styles['draft'];
   };
@@ -191,7 +191,7 @@ export default function Dashboard() {
         <section className="lg:col-span-4 flex flex-col overflow-hidden h-full">
           <div className="flex justify-between items-center mb-3 px-1">
             <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-              Master Queue
+              Pipeline Stream
             </h2>
             <span className="text-[10px] text-slate-500 font-medium bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">{filteredRecords.length} records</span>
           </div>
@@ -202,13 +202,17 @@ export default function Dashboard() {
             <button onClick={() => setFilter('exception')} className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${filter === 'exception' ? 'bg-slate-900 text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50'}`}>Exceptions</button>
           </div>
 
-          <div className="overflow-y-auto flex-grow space-y-2 pr-2">
+          <div className="overflow-y-auto flex-grow space-y-1.5 pr-2">
             {filteredRecords.length === 0 && <div className="text-center py-10 text-slate-500 text-sm">No records found.</div>}
             {filteredRecords.map(r => {
               const isSelected = r.id === selectedRecordId;
               const hasException = r.reason_codes && r.reason_codes.length > 0;
               return (
-                <div key={r.id} onClick={() => setSelectedRecordId(r.id!)} className={`p-4 rounded-xl cursor-pointer transition-all border bg-white ${isSelected ? 'border-accent shadow-[0_0_0_1px_rgba(79,70,229,1)]' : 'border-slate-200/80 shadow-premium hover:border-slate-300'} flex flex-col gap-3`}>
+                <div 
+                  key={r.id} 
+                  onClick={() => setSelectedRecordId(r.id!)} 
+                  className={`p-3.5 rounded-lg cursor-pointer transition-colors border bg-white ${isSelected ? 'border-l-2 border-l-accent border-y-slate-200/80 border-r-slate-200/80 shadow-sm bg-slate-50/50' : 'border-slate-200/50 border-l-2 border-l-transparent hover:bg-slate-100/70 hover:border-slate-200'} flex flex-col gap-2`}
+                >
                   <div className="flex justify-between items-center">
                     <span className="font-mono text-xs font-semibold text-slate-900">{r.id}</span>
                     <span className="text-xs font-semibold text-slate-700">${r.amount?.toLocaleString()}</span>
@@ -217,8 +221,9 @@ export default function Dashboard() {
                     <span className={`text-[10px] px-2 py-0.5 rounded-md ${getBadgeStyle(r.state)} uppercase font-bold tracking-wider`}>{r.state}</span>
                   </div>
                   {hasException && (
-                    <div className={`text-[9px] uppercase font-bold px-2 py-1 rounded-md ${r.reason_codes![0].includes("AGENT") ? 'bg-orange-50 text-orange-600 border border-orange-100' : 'bg-red-50 text-red-600 border border-red-100'} inline-block truncate w-full`} title={r.reason_codes![0]}>
-                      ⚠️ {r.reason_codes![0].split(':')[0]}
+                    <div className={`mt-1 text-[9px] uppercase font-bold px-2 py-1 rounded-md ${r.reason_codes![0].includes("AGENT") ? 'bg-amber-50 text-amber-700 border border-amber-200/60' : 'bg-amber-50 text-amber-700 border border-amber-200/60'} inline-flex items-center gap-1.5 w-max`} title={r.reason_codes![0]}>
+                      <span className="w-1 h-1 rounded-full bg-amber-500"></span>
+                      {r.reason_codes![0].split(':')[0]}
                     </div>
                   )}
                 </div>
@@ -245,7 +250,7 @@ export default function Dashboard() {
                   <div className="flex gap-2 mt-2 flex-wrap">
                     <span className={`text-[10px] px-2 py-1 rounded-md ${getBadgeStyle(selectedRecordDetail.state)} uppercase tracking-wider font-bold`}>{selectedRecordDetail.state}</span>
                     {selectedRecordDetail.reason_codes?.map(rc => (
-                      <span key={rc} className="text-[10px] px-2 py-1 rounded-md bg-red-50 text-red-600 border border-red-100 uppercase font-bold truncate max-w-[200px]" title={rc}>{rc.split(':')[0]}</span>
+                      <span key={rc} className="text-[10px] px-2 py-1 rounded-md bg-amber-50 text-amber-700 border border-amber-200/60 uppercase font-bold truncate max-w-[200px]" title={rc}>{rc.split(':')[0]}</span>
                     ))}
                   </div>
                 </div>
@@ -256,50 +261,74 @@ export default function Dashboard() {
               </div>
 
               <div className="flex-grow overflow-y-auto p-6 flex flex-col gap-8 bg-slate-50/30">
-                {/* Lineage Card */}
+                {/* Lineage Summary Grid */}
                 <div>
                   <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-3">
-                    Lineage Profile
+                    Ingestion Summary
                   </h3>
-                  <div className="bg-white rounded-xl p-5 border border-slate-200/80 shadow-premium">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                      <div><div className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-1">Owner</div><div className="text-sm font-medium text-slate-900">{selectedRecordDetail.lineage?.owner || 'N/A'}</div></div>
-                      <div><div className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-1">Format</div><div className="text-sm font-medium text-slate-900 font-mono">{selectedRecordDetail.lineage?.source_format || 'N/A'}</div></div>
-                      <div><div className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-1">Deadline</div><div className="text-sm font-medium text-slate-900">{selectedRecordDetail.lineage?.deadline || 'N/A'}</div></div>
-                      <div><div className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-1">Hash</div><div className="text-sm font-medium font-mono text-accent truncate bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 inline-block max-w-full" title={selectedRecordDetail.lineage?.source_hash}>{selectedRecordDetail.lineage?.source_hash || 'N/A'}</div></div>
+                  <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
+                    <div className="flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-slate-100">
+                      <div className="p-4 flex-1">
+                        <div className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-1">Owner</div>
+                        <div className="text-sm font-medium text-slate-900">{selectedRecordDetail.lineage?.owner || 'N/A'}</div>
+                      </div>
+                      <div className="p-4 flex-1">
+                        <div className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-1">Format</div>
+                        <div className="text-sm font-medium text-slate-900 font-mono">{selectedRecordDetail.lineage?.source_format || 'N/A'}</div>
+                      </div>
+                      <div className="p-4 flex-1">
+                        <div className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-1">Deadline</div>
+                        <div className="text-sm font-medium text-slate-900">{selectedRecordDetail.lineage?.deadline || 'N/A'}</div>
+                      </div>
+                      <div className="p-4 flex-1">
+                        <div className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-1">Signature Hash</div>
+                        <div className="text-xs font-medium font-mono text-slate-500 truncate max-w-[120px]" title={selectedRecordDetail.lineage?.source_hash}>{selectedRecordDetail.lineage?.source_hash || 'N/A'}</div>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Timeline */}
+                {/* Timeline Component */}
                 <div>
-                  <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-4">
-                    Multi-Agent Trace
+                  <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-6">
+                    Agent Decision Trace
                   </h3>
-                  <div className="pl-2">
+                  <div className="pl-3 space-y-6">
                     {(!selectedRecordDetail.agent_trace || selectedRecordDetail.agent_trace.length === 0) && (
                       <div className="text-slate-400 text-sm">No agent traces logged.</div>
                     )}
                     {selectedRecordDetail.agent_trace?.map((span, i) => {
                       const isFail = span.verdict === 'FAIL';
+                      const isVerifier = span.agent.toLowerCase().includes('verifier');
                       return (
-                        <div key={i} className="relative pl-10 pb-6 timeline-item timeline-connector">
-                          <div className={`absolute left-0 top-0 w-7 h-7 rounded-full border-2 ${isFail ? 'bg-white border-red-400' : 'bg-white border-accent'} flex items-center justify-center z-10 shadow-sm`}>
-                            <div className={`w-2 h-2 rounded-full ${isFail ? 'bg-red-500' : 'bg-accent'}`}></div>
-                          </div>
-                          <div className={`bg-white rounded-xl p-5 border shadow-premium ${isFail ? 'border-red-200' : 'border-slate-200/80'}`}>
-                            <div className="flex justify-between items-center mb-3">
-                              <span className="text-sm font-bold text-slate-900 uppercase tracking-wider">{span.agent}</span>
-                              <span className="text-[10px] font-mono bg-slate-100 border border-slate-200 px-2 py-1 rounded-md text-slate-600 font-semibold">{span.model}</span>
+                        <div key={i} className="relative pl-8 timeline-item timeline-connector">
+                          {/* Distinct Icon Node */}
+                          <div className={`absolute left-0 top-1.5 -ml-[5px] w-[11px] h-[11px] rounded-full ring-4 ring-slate-50 ${isFail ? 'bg-red-500' : (isVerifier ? 'bg-emerald-500' : 'bg-slate-300')} z-10`}></div>
+                          
+                          <div className={`bg-white rounded-xl p-4 border shadow-sm transition-shadow hover:shadow-md ${isFail ? 'border-red-200' : 'border-slate-200/80'}`}>
+                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-2">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-bold text-slate-900">{span.agent}</span>
+                                {isVerifier && !isFail && (
+                                  <span className="text-[9px] px-1.5 py-0.5 rounded border bg-emerald-50 text-emerald-700 border-emerald-200 uppercase font-bold tracking-wider">Pass</span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 text-[10px]">
+                                <span className="font-mono bg-slate-100 border border-slate-200/80 px-1.5 py-0.5 rounded text-slate-600 font-medium">{span.model}</span>
+                                <span className="text-slate-400">{span.latency_ms}ms</span>
+                                <span className="text-slate-400">${span.cost_usd.toFixed(5)}</span>
+                              </div>
                             </div>
-                            <div className="grid grid-cols-3 gap-4 text-xs">
-                              <div><span className="block uppercase tracking-wider text-[9px] font-semibold text-slate-400 mb-1">Tokens</span><span className="font-mono text-slate-700 font-medium">{span.tokens_in} IN / {span.tokens_out} OUT</span></div>
-                              <div><span className="block uppercase tracking-wider text-[9px] font-semibold text-slate-400 mb-1">Latency</span><span className="font-mono text-slate-700 font-medium">{span.latency_ms}ms</span></div>
-                              <div><span className="block uppercase tracking-wider text-[9px] font-semibold text-slate-400 mb-1">Cost</span><span className="font-mono text-slate-700 font-medium">${span.cost_usd.toFixed(5)}</span></div>
-                            </div>
+                            
+                            {/* Fail State: High visibility */}
                             {isFail && span.issues && (
-                              <div className="mt-4 p-3 bg-red-50 border border-red-100 rounded-lg text-xs text-red-700 font-medium">
-                                {span.issues.join(', ')}
+                              <div className="mt-3 p-3 bg-red-50 border-l-2 border-l-red-500 rounded-r-lg text-xs text-red-700 font-medium flex flex-col gap-1">
+                                {span.issues.map((iss, idx) => (
+                                  <span key={idx} className="flex items-center gap-1.5">
+                                    <span className="w-1 h-1 rounded-full bg-red-500 shrink-0"></span>
+                                    {iss}
+                                  </span>
+                                ))}
                               </div>
                             )}
                           </div>
