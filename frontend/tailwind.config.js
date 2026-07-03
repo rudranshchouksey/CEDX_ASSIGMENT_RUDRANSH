@@ -1,6 +1,5 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  darkMode: 'class',
   content: [
     './app/**/*.{js,ts,jsx,tsx,mdx}',
     './components/**/*.{js,ts,jsx,tsx,mdx}',
@@ -8,14 +7,22 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        background: '#0b0f19',
-        surface: 'rgba(20, 26, 40, 0.6)',
-        surfaceBorder: 'rgba(255, 255, 255, 0.08)',
-        accent: '#3b82f6',
+        background: '#fafafa',
+        surface: '#ffffff',
+        surfaceBorder: 'rgba(226, 232, 240, 0.8)', // slate-200/80
+        accent: '#4f46e5', // indigo-600
         success: '#10b981',
         danger: '#ef4444',
         warning: '#f59e0b',
+        slate900: '#0f172a',
+        slate500: '#64748b',
       },
+      fontFamily: {
+        sans: ['Inter', 'Geist', 'SF Pro Display', 'sans-serif'],
+      },
+      boxShadow: {
+        'premium': '0 1px 2px rgba(0, 0, 0, 0.02), 0 4px 6px -1px rgba(0, 0, 0, 0.01)',
+      }
     },
   },
   plugins: [],
