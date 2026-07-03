@@ -7,11 +7,13 @@ export default function Dashboard() {
   const [status, setStatus] = useState<SystemStats & { case_id?: string; role?: string; threshold?: number } | null>(null);
   const [records, setRecords] = useState<Partial<Record>[]>([]);
   const [filter, setFilter] = useState<'all' | 'in_review' | 'exception'>('all');
+  const [exceptionFilter, setExceptionFilter] = useState<'all' | 'agent' | 'data'>('all');
   const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
   const [selectedRecordDetail, setSelectedRecordDetail] = useState<Record | null>(null);
   const [operatorRole, setOperatorRole] = useState('intern');
-  const [toasts, setToasts] = useState<{ id: number, type: 'error' | 'success', title: string, message: string }[]>([]);
+  const [toasts, setToasts] = useState<{ id: number, type: 'error' | 'success' | 'slate', title: string, message: string }[]>([]);
   const [replayLlm, setReplayLlm] = useState(false);
+  const [showAmendmentModal, setShowAmendmentModal] = useState(false);
 
   const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
 
@@ -28,7 +30,7 @@ export default function Dashboard() {
         setRecords(await recordsRes.json());
       }
     } catch (err) {
-      addToast('error', 'Network Error', 'Failed to fetch telemetry data.');
+      addToast('slate', 'Network Error', 'Failed to fetch telemetry data.');
     }
   };
 
@@ -51,14 +53,14 @@ export default function Dashboard() {
           setSelectedRecordDetail(await res.json());
         }
       } catch (err) {
-        addToast('error', 'Fetch Error', 'Failed to load record details.');
+        addToast('slate', 'Fetch Error', 'Failed to load record details.');
       }
     };
     fetchDetail();
   }, [selectedRecordId]);
 
   // Toaster logic
-  const addToast = (type: 'error' | 'success', title: string, message: string) => {
+  const addToast = (type: 'error' | 'success' | 'slate', title: string, message: string) => {
     const id = Date.now();
     setToasts(prev => [...prev, { id, type, title, message }]);
     setTimeout(() => {
@@ -68,12 +70,13 @@ export default function Dashboard() {
 
   // Actions
   const dispatchAction = async (actionStr: string) => {
-    if (!selectedRecordId) return addToast('error', 'Action Blocked', 'Select a record first.');
+    if (!selectedRecordId) return addToast('slate', 'Action Blocked', 'Select a record first.');
     
-    // Client Side Guardrail
-    if (actionStr === 'deliver' && selectedRecordDetail && status?.threshold) {
+    // Client Side Amendment Interceptor
+    if (actionStr === 'approve' && selectedRecordDetail && status?.threshold) {
       if (selectedRecordDetail.amount >= status.threshold && operatorRole !== status.role) {
-        addToast('error', 'Client Guardrail Warning', `High value payload. Role '${status.role}' required. Dispatching to API...`);
+        setShowAmendmentModal(true);
+        return;
       }
     }
 
@@ -92,10 +95,11 @@ export default function Dashboard() {
         const dRes = await fetch(`${API_BASE}/api/records/${selectedRecordId}`);
         if (dRes.ok) setSelectedRecordDetail(await dRes.json());
       } else {
-        addToast('error', res.status === 403 ? '403 Forbidden (Live Amendment Gate)' : 'Validation Error', data.detail || 'Request rejected.');
+        // Slate-toned 403 error rendering
+        addToast('slate', res.status === 403 ? '403 Forbidden (Amendment Gate)' : 'Validation Error', data.detail || 'Request rejected.');
       }
     } catch (err) {
-      addToast('error', 'Network Error', 'Failed to dispatch action.');
+      addToast('slate', 'Network Error', 'Failed to dispatch action.');
     }
   };
 
@@ -113,7 +117,12 @@ export default function Dashboard() {
 
   const filteredRecords = records.filter(r => {
     if (filter === 'in_review') return r.state === 'in_review';
-    if (filter === 'exception') return r.reason_codes && r.reason_codes.length > 0;
+    if (filter === 'exception') {
+      if (!r.reason_codes || r.reason_codes.length === 0) return false;
+      if (exceptionFilter === 'agent') return r.reason_codes.some(rc => rc.includes('AGENT'));
+      if (exceptionFilter === 'data') return r.reason_codes.some(rc => !rc.includes('AGENT'));
+      return true;
+    }
     return true;
   });
 
@@ -136,45 +145,45 @@ export default function Dashboard() {
           <div className="flex items-center bg-slate-100 p-1 rounded-lg border border-slate-200/80 shadow-inner mr-4">
             <button 
               onClick={() => setReplayLlm(false)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200 ${!replayLlm ? 'bg-white text-slate-900 shadow-[0_1px_2px_rgba(0,0,0,0.06)]' : 'text-slate-500 hover:text-slate-700'}`}>
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200 ease-out ${!replayLlm ? 'bg-white text-slate-900 shadow-[0_1px_2px_rgba(0,0,0,0.06)]' : 'text-slate-500 hover:text-slate-700'}`}>
               Live
             </button>
             <button 
               onClick={() => setReplayLlm(true)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200 ${replayLlm ? 'bg-white text-accent shadow-[0_1px_2px_rgba(0,0,0,0.06)]' : 'text-slate-500 hover:text-slate-700'}`}>
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200 ease-out ${replayLlm ? 'bg-white text-accent shadow-[0_1px_2px_rgba(0,0,0,0.06)]' : 'text-slate-500 hover:text-slate-700'}`}>
               Offline
             </button>
           </div>
 
-          <div className="glass-panel px-4 py-2 flex flex-col justify-center min-w-[120px]">
+          <div className="glass-panel px-4 py-2 flex flex-col justify-center min-w-[120px] transition-all duration-200 ease-out">
             <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-1">Role R</span>
             <span className="font-medium text-slate-900 text-sm flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-accent"></span>
               {status?.role || '...'}
             </span>
           </div>
-          <div className="glass-panel px-4 py-2 flex flex-col justify-center min-w-[120px]">
+          <div className="glass-panel px-4 py-2 flex flex-col justify-center min-w-[120px] transition-all duration-200 ease-out">
             <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-1">Threshold T</span>
             <span className="font-medium text-slate-900 text-sm flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
               ${status?.threshold?.toLocaleString() || '...'}
             </span>
           </div>
-          <div className="glass-panel px-4 py-2 flex flex-col justify-center min-w-[120px]">
+          <div className="glass-panel px-4 py-2 flex flex-col justify-center min-w-[120px] transition-all duration-200 ease-out">
             <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-1">Avg Cost / Rec</span>
             <span className="font-medium text-slate-900 text-sm font-mono flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
               ${status?.avg_cost?.toFixed(4) || '0.0000'}
             </span>
           </div>
-          <div className="glass-panel px-4 py-2 flex flex-col justify-center min-w-[120px]">
+          <div className="glass-panel px-4 py-2 flex flex-col justify-center min-w-[120px] transition-all duration-200 ease-out">
             <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-1">p95 Latency</span>
             <span className="font-medium text-slate-900 text-sm font-mono flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
               {status?.p95_latency?.toFixed(1) || '0.0'}ms
             </span>
           </div>
-          <div className="glass-panel px-4 py-2 flex flex-col justify-center min-w-[120px]">
+          <div className="glass-panel px-4 py-2 flex flex-col justify-center min-w-[120px] transition-all duration-200 ease-out">
             <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-1">Total Run Cost</span>
             <span className="font-medium text-slate-900 text-sm font-mono flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
@@ -197,13 +206,21 @@ export default function Dashboard() {
           </div>
           
           <div className="flex gap-2 mb-3 px-1">
-            <button onClick={() => setFilter('all')} className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${filter === 'all' ? 'bg-slate-900 text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50'}`}>All</button>
-            <button onClick={() => setFilter('in_review')} className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${filter === 'in_review' ? 'bg-slate-900 text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50'}`}>In Review</button>
-            <button onClick={() => setFilter('exception')} className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${filter === 'exception' ? 'bg-slate-900 text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50'}`}>Exceptions</button>
+            <button onClick={() => setFilter('all')} className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ease-out ${filter === 'all' ? 'bg-slate-900 text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50'}`}>All</button>
+            <button onClick={() => setFilter('in_review')} className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ease-out ${filter === 'in_review' ? 'bg-slate-900 text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50'}`}>In Review</button>
+            <button onClick={() => setFilter('exception')} className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ease-out ${filter === 'exception' ? 'bg-slate-900 text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50'}`}>Exceptions</button>
           </div>
 
-          <div className="overflow-y-auto flex-grow space-y-1.5 pr-2">
-            {filteredRecords.length === 0 && <div className="text-center py-10 text-slate-500 text-sm">No records found.</div>}
+          {filter === 'exception' && (
+            <div className="flex gap-2 mb-3 px-1 border-b border-slate-200 pb-3">
+              <button onClick={() => setExceptionFilter('all')} className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase transition-all duration-200 ease-out ${exceptionFilter === 'all' ? 'bg-amber-100 text-amber-700' : 'bg-transparent text-slate-400 hover:text-slate-600'}`}>All Anomalies</button>
+              <button onClick={() => setExceptionFilter('data')} className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase transition-all duration-200 ease-out ${exceptionFilter === 'data' ? 'bg-amber-100 text-amber-700' : 'bg-transparent text-slate-400 hover:text-slate-600'}`}>Data Heuristics</button>
+              <button onClick={() => setExceptionFilter('agent')} className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase transition-all duration-200 ease-out ${exceptionFilter === 'agent' ? 'bg-orange-100 text-orange-700' : 'bg-transparent text-slate-400 hover:text-slate-600'}`}>Agent Overrules</button>
+            </div>
+          )}
+
+          <div className={`overflow-y-auto flex-grow space-y-1.5 pr-2 ${filter === 'exception' ? 'grid grid-cols-1 md:grid-cols-2 gap-2 space-y-0 content-start' : ''}`}>
+            {filteredRecords.length === 0 && <div className="text-center py-10 text-slate-500 text-sm col-span-full">No records found.</div>}
             {filteredRecords.map(r => {
               const isSelected = r.id === selectedRecordId;
               const hasException = r.reason_codes && r.reason_codes.length > 0;
@@ -211,7 +228,7 @@ export default function Dashboard() {
                 <div 
                   key={r.id} 
                   onClick={() => setSelectedRecordId(r.id!)} 
-                  className={`p-3.5 rounded-lg cursor-pointer transition-colors border bg-white ${isSelected ? 'border-l-2 border-l-accent border-y-slate-200/80 border-r-slate-200/80 shadow-sm bg-slate-50/50' : 'border-slate-200/50 border-l-2 border-l-transparent hover:bg-slate-100/70 hover:border-slate-200'} flex flex-col gap-2`}
+                  className={`p-3.5 rounded-lg cursor-pointer transition-all duration-200 ease-out border bg-white ${isSelected ? 'border-l-2 border-l-accent border-y-slate-200/80 border-r-slate-200/80 shadow-sm bg-slate-50/50' : 'border-slate-200/50 border-l-2 border-l-transparent hover:bg-slate-100/70 hover:border-slate-200'} flex flex-col gap-2`}
                 >
                   <div className="flex justify-between items-center">
                     <span className="font-mono text-xs font-semibold text-slate-900">{r.id}</span>
@@ -233,7 +250,7 @@ export default function Dashboard() {
         </section>
 
         {/* Right Pane (Detail) */}
-        <section className="lg:col-span-8 glass-panel flex flex-col overflow-hidden h-full relative">
+        <section className="lg:col-span-8 glass-panel flex flex-col overflow-hidden h-full relative transition-all duration-200 ease-out">
           {!selectedRecordId && (
             <div className="absolute inset-0 flex items-center justify-center bg-slate-50/50 z-10 backdrop-blur-sm rounded-lg">
               <div className="text-center text-slate-400 text-sm">
@@ -244,7 +261,7 @@ export default function Dashboard() {
 
           {selectedRecordDetail && (
             <>
-              <div className="p-6 border-b border-slate-100 flex justify-between items-start bg-white">
+              <div className="p-6 border-b border-slate-100 flex justify-between items-start bg-white transition-all duration-200 ease-out">
                 <div>
                   <h2 className="text-lg font-bold font-mono text-slate-900">{selectedRecordDetail.id}</h2>
                   <div className="flex gap-2 mt-2 flex-wrap">
@@ -266,7 +283,7 @@ export default function Dashboard() {
                   <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-3">
                     Ingestion Summary
                   </h3>
-                  <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
+                  <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden transition-all duration-200 ease-out hover:shadow-md">
                     <div className="flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-slate-100">
                       <div className="p-4 flex-1">
                         <div className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-1">Owner</div>
@@ -301,7 +318,7 @@ export default function Dashboard() {
                       const isFail = span.verdict === 'FAIL';
                       const isVerifier = span.agent.toLowerCase().includes('verifier');
                       return (
-                        <div key={i} className="relative pl-8 timeline-item timeline-connector">
+                        <div key={i} className="relative pl-8 timeline-item timeline-connector transition-all duration-200 ease-out">
                           {/* Distinct Icon Node */}
                           <div className={`absolute left-0 top-1.5 -ml-[5px] w-[11px] h-[11px] rounded-full ring-4 ring-slate-50 ${isFail ? 'bg-red-500' : (isVerifier ? 'bg-emerald-500' : 'bg-slate-300')} z-10`}></div>
                           
@@ -344,7 +361,7 @@ export default function Dashboard() {
                 <div className="flex flex-col md:flex-row gap-4 items-center">
                   <div className="w-full md:w-1/3">
                     <label className="block text-[10px] uppercase tracking-wider font-semibold text-slate-500 mb-1.5">Simulated Operator Role</label>
-                    <select value={operatorRole} onChange={(e) => setOperatorRole(e.target.value)} className="w-full bg-white border border-slate-200/80 shadow-sm rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all">
+                    <select value={operatorRole} onChange={(e) => setOperatorRole(e.target.value)} className="w-full bg-white border border-slate-200/80 shadow-sm rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all duration-200 ease-out">
                       <option value="intern">Intern (Unauthorized)</option>
                       <option value="risk_officer">Risk Officer</option>
                       <option value="legal_counsel">Legal Counsel</option>
@@ -354,22 +371,22 @@ export default function Dashboard() {
                   </div>
                   <div className="flex-grow flex gap-3 w-full md:w-auto pt-[22px]">
                     <button 
+                      onClick={() => dispatchAction('exception')} 
+                      disabled={selectedRecordDetail.state === 'delivered'}
+                      className={`flex-1 text-sm font-semibold py-2 px-4 rounded-lg transition-all duration-200 ease-out border shadow-sm ${selectedRecordDetail.state === 'delivered' ? 'bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700 hover:text-slate-900'}`}>
+                      Isolate to Exception
+                    </button>
+                    <button 
                       onClick={() => dispatchAction('request_changes')} 
                       disabled={selectedRecordDetail.state !== 'in_review'}
-                      className={`flex-1 text-sm font-semibold py-2 px-4 rounded-lg transition-all border shadow-sm ${selectedRecordDetail.state !== 'in_review' ? 'bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:text-slate-900'}`}>
-                      Request Changes
+                      className={`flex-1 text-sm font-semibold py-2 px-4 rounded-lg transition-all duration-200 ease-out border shadow-sm ${selectedRecordDetail.state !== 'in_review' ? 'bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700 hover:text-slate-900'}`}>
+                      Request Revision
                     </button>
                     <button 
                       onClick={() => dispatchAction('approve')} 
                       disabled={selectedRecordDetail.state !== 'in_review'}
-                      className={`flex-1 text-sm font-semibold py-2 px-4 rounded-lg transition-all shadow-sm ${selectedRecordDetail.state !== 'in_review' ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-accent text-white hover:bg-indigo-700'}`}>
-                      Approve Override
-                    </button>
-                    <button 
-                      onClick={() => dispatchAction('deliver')} 
-                      disabled={selectedRecordDetail.state !== 'approved'}
-                      className={`flex-1 text-sm font-semibold py-2 px-4 rounded-lg transition-all shadow-sm ${selectedRecordDetail.state !== 'approved' ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-[0_1px_2px_rgba(16,185,129,0.2)]'}`}>
-                      Deliver
+                      className={`flex-1 text-sm font-semibold py-2 px-4 rounded-lg transition-all duration-200 ease-out shadow-sm ${selectedRecordDetail.state !== 'in_review' ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-slate-900 text-white hover:bg-slate-800'}`}>
+                      Approve System Delivery
                     </button>
                   </div>
                 </div>
@@ -379,15 +396,37 @@ export default function Dashboard() {
         </section>
       </main>
 
+      {/* Client-Side Live Amendment Interceptor Modal */}
+      {showAmendmentModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm transition-all duration-200 ease-out">
+          <div className="bg-rose-50/50 border border-rose-150 rounded-xl shadow-2xl max-w-md w-full p-6 animate-slideIn">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center text-rose-600 font-bold text-lg">!</div>
+              <h3 className="text-lg font-bold text-slate-900">Delivery Intercepted</h3>
+            </div>
+            <p className="text-sm text-slate-700 mb-6">
+              Action blocked. An authorized cryptographically computed signature from <span className="font-bold text-slate-900">Role {status?.role}</span> is explicitly mandatory to authorize delivery for transactions evaluated at or above <span className="font-bold text-slate-900">${status?.threshold?.toLocaleString()}</span>.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button 
+                onClick={() => setShowAmendmentModal(false)}
+                className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-all duration-200 ease-out shadow-sm">
+                Acknowledge & Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Toaster Container */}
       <div className="fixed bottom-6 right-6 flex flex-col gap-3 z-50 pointer-events-none">
         {toasts.map(t => (
-          <div key={t.id} className={`bg-white border p-4 rounded-xl shadow-premium flex gap-3 max-w-sm toast-enter pointer-events-auto ${t.type === 'error' ? 'border-red-200' : 'border-emerald-200'}`}>
-            <div className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${t.type === 'error' ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-600'}`}>
-              {t.type === 'error' ? '!' : '✓'}
+          <div key={t.id} className={`bg-white border p-4 rounded-xl shadow-premium flex gap-3 max-w-sm toast-enter pointer-events-auto transition-all duration-200 ease-out ${t.type === 'error' ? 'border-red-200' : (t.type === 'slate' ? 'border-slate-200/80 bg-slate-50' : 'border-emerald-200')}`}>
+            <div className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${t.type === 'error' ? 'bg-red-100 text-red-600' : (t.type === 'slate' ? 'bg-slate-200 text-slate-700' : 'bg-emerald-100 text-emerald-600')}`}>
+              {t.type === 'error' ? '!' : (t.type === 'slate' ? 'i' : '✓')}
             </div>
             <div>
-              <h4 className="text-sm font-bold text-slate-900">{t.title}</h4>
+              <h4 className={`text-sm font-bold ${t.type === 'slate' ? 'text-slate-700' : 'text-slate-900'}`}>{t.title}</h4>
               <p className="text-xs text-slate-500 mt-1">{t.message}</p>
             </div>
           </div>
