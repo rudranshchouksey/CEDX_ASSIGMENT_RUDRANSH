@@ -1,8 +1,0 @@
-{
-  "request": "=== CEDX Assembly Draft Prompt v1.0.0 ===\nRecord ID: PROBE-BUDGET-1\nOwner: Alice\nDeadline: 2026-12-31\nAmount: 100.0\nSource: json\nNotes: Clean record\nNo anomalies detected.\nPast failures: 0\nRegulatory role: compliance\nFinancial threshold: 10000\n\nProduce a structured assembly payload for governance review.",
-  "raw_response": "{\n  \"record_id\": \"PROBE-BUDGET-1\",\n  \"owner\": \"Alice\",\n  \"deadline\": \"2026-12-31\",\n  \"amount\": \"100.0\",\n  \"summary\": \"Processed record PROBE-BUDGET-1 from json source.\",\n  \"source_hash\": \"abcdef\",\n  \"assembly_version\": \"1.0.0\"\n}",
-  "response_hash": "ba1e8cf682d562250088a6668fefaba51086a031dd1000382bf8f1232c3b2e3a",
-  "model": "gemini-1.5-flash",
-  "prompt_version": "1.0.0",
-  "agent": "worker"
-}

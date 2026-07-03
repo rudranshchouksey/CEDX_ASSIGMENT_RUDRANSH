@@ -1,8 +1,0 @@
-{
-  "request": "=== CEDX Assembly Draft Prompt v1.0.0 ===\nRecord ID: MULTI-003\nOwner: tester@example.com\nDeadline: 2027-06-01\nAmount: 15000\nSource: feed\nNotes: Standard record.\nNo anomalies detected.\nPast failures: 0\nRegulatory role: legal_counsel\nFinancial threshold: 44000\n\nProduce a structured assembly payload for governance review.",
-  "raw_response": "{\n  \"record_id\": \"MULTI-003\",\n  \"owner\": \"tester@example.com\",\n  \"deadline\": \"2027-06-01\",\n  \"amount\": \"15000\",\n  \"summary\": \"Processed record MULTI-003 from feed source.\",\n  \"source_hash\": \"abc123def456\",\n  \"assembly_version\": \"1.0.0\"\n}",
-  "response_hash": "39e1fdaff5e53fc5e51ca908837a9c8bead7817655b735bda3b3033975c349a9",
-  "model": "gemini-1.5-flash",
-  "prompt_version": "1.0.0",
-  "agent": "worker"
-}

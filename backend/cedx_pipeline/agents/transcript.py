@@ -39,7 +39,9 @@ class TranscriptBundle:
         as required by the spec.
         """
         directory.mkdir(parents=True, exist_ok=True)
-        filename = f"{self.response_hash[-16:]}.json"
+        import hashlib
+        req_hash = hashlib.sha256(self.request.encode("utf-8")).hexdigest()
+        filename = f"{req_hash[-8:]}_{self.response_hash[-8:]}.json"
         path = directory / filename
 
         data = asdict(self)

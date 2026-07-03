@@ -1,8 +1,0 @@
-{
-  "request": "Verify draft for record TRACE-001 against source:\nRecord(id='TRACE-001', owner='tester@example.com', deadline='2027-06-01', amount=Decimal('15000'), payload={'project': 'Test'}, notes='Standard record.', source_format='feed', source_version_hash='abc123def456')\nDraft:\n{'record_id': 'TRACE-001', 'owner': 'tester@example.com', 'deadline': '2027-06-01', 'amount': '15000', 'summary': 'Processed record TRACE-001 from feed source.', 'source_hash': 'abc123def456', 'assembly_version': '1.0.0'}",
-  "raw_response": "{\"verdict\": \"pass\", \"reason\": \"Draft passed all validation checks.\"}",
-  "response_hash": "837e44293aa5985b606a6eef1b7f3e6923d6b2bb1ca8c8e66f0547f987e17f2d",
-  "model": "claude-sonnet-4",
-  "prompt_version": "1.0.0",
-  "agent": "verifier"
-}

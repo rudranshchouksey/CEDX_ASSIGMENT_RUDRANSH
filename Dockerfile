@@ -10,11 +10,11 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 # Install dependencies first (layer caching)
-COPY pyproject.toml ./
+COPY backend/pyproject.toml ./
 RUN pip install --no-cache-dir . 2>/dev/null || true
 
 # Copy application source
-COPY cedx_pipeline/ ./cedx_pipeline/
+COPY backend/cedx_pipeline/ ./cedx_pipeline/
 
 # Install the package itself
 RUN pip install --no-cache-dir .

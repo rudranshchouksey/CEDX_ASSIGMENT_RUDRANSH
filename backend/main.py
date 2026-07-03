@@ -22,7 +22,7 @@ app = FastAPI(title="CEDX Governance API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=[os.environ.get("FRONTEND_URL", "http://localhost:3000")],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -49,7 +49,7 @@ def bootstrap_state():
             os.environ["CASE_ID"] = "CEDX-VERCEL-1234"
         state.amendment = init_amendment()
 
-        audit_path = Path("out/audit.json")
+        audit_path = Path(__file__).parent / "out" / "audit.json"
         
         # Populate realistic mock state first for Vercel demo robustness
         state.records = {

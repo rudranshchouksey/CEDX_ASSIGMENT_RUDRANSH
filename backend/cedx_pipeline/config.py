@@ -13,6 +13,9 @@ from pathlib import Path
 
 from cedx_pipeline.errors import ConfigError
 
+# ── Backend Roots ────────────────────────────────────────────────────────────
+BACKEND_ROOT: Path = Path(__file__).resolve().parent.parent
+
 # ── Public Constants ─────────────────────────────────────────────────────────
 
 #: Regulatory roles that the amendment core may assign.
@@ -37,7 +40,7 @@ MAD_CONSISTENCY_CONSTANT: float = 1.4826
 DEFAULT_PIPELINE_NOW: str = "2026-06-26"
 
 #: Default seed directory path when ``SEED_DIR`` is unset.
-DEFAULT_SEED_DIR: str = "/app/seed"
+DEFAULT_SEED_DIR: str = str(BACKEND_ROOT / "seed")
 
 #: Mandatory record fields that must be non-null.
 MANDATORY_FIELDS: tuple[str, ...] = ("id", "owner", "deadline", "amount")
@@ -66,7 +69,7 @@ MODEL_COST_PER_1K_TOKENS: dict[str, float] = {
 # ── Phase 3 Constants ────────────────────────────────────────────────────────
 
 #: Directory for storing and retrieving LLM transcripts.
-TRANSCRIPTS_DIR: Path = Path(os.environ.get("TRANSCRIPTS_DIR", "./transcripts")).resolve()
+TRANSCRIPTS_DIR: Path = Path(os.environ.get("TRANSCRIPTS_DIR", BACKEND_ROOT / "transcripts")).resolve()
 
 #: If true, intercept LLM interactions and replay from transcripts.
 REPLAY_LLM: bool = os.environ.get("REPLAY_LLM", "false").strip().lower() == "true"

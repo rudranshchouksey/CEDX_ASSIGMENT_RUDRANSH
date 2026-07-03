@@ -1,8 +1,0 @@
-{
-  "request": "Verify draft for record AGT-001 against source:\nRecord(id='AGT-001', owner='tester@example.com', deadline='2027-06-01', amount=Decimal('15000'), payload={'project': 'Test'}, notes='Standard record.', source_format='feed', source_version_hash='abc123def456')\nDraft:\n{}",
-  "raw_response": "{\"verdict\": \"fail\", \"reason\": \"Verifier found 5 issue(s).\"}",
-  "response_hash": "93573d68676be4858423f7c6c732728c605e099f1007d29f51a6ed02781242e7",
-  "model": "claude-sonnet-4",
-  "prompt_version": "1.0.0",
-  "agent": "verifier"
-}

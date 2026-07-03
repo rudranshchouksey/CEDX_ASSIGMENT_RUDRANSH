@@ -1,33 +1,31 @@
 .PHONY: demo trace replay probe-approval probe-agent-failure probe-budget probe-append-only probe-idempotency test validate-e2e
 
 demo:
-	cd backend && REPLAY_LLM=true python -m cedx_pipeline.main
+	cd backend && $(MAKE) demo
 
 trace:
-	@if [ -z "$(ID)" ]; then echo "Error: ID is required. Usage: make trace ID=<id>"; exit 1; fi
-	cd backend && python scripts/trace.py --id $(ID)
+	cd backend && $(MAKE) trace ID=$(ID)
 
 replay:
-	@if [ -z "$(ID)" ]; then echo "Error: ID is required. Usage: make replay ID=<id>"; exit 1; fi
-	cd backend && python scripts/replay.py --id $(ID)
+	cd backend && $(MAKE) replay ID=$(ID)
 
 probe-approval:
-	cd backend && python scripts/probe_approval.py
+	cd backend && $(MAKE) probe-approval
 
 probe-agent-failure:
-	cd backend && python scripts/probe_agent_failure.py
+	cd backend && $(MAKE) probe-agent-failure
 
 probe-budget:
-	cd backend && python scripts/probe_budget.py
+	cd backend && $(MAKE) probe-budget
 
 probe-append-only:
-	cd backend && python scripts/probe_append_only.py
+	cd backend && $(MAKE) probe-append-only
 
 probe-idempotency:
-	cd backend && python scripts/probe_idempotency.py
+	cd backend && $(MAKE) probe-idempotency
 
 test:
-	cd backend && pytest tests/
+	cd backend && $(MAKE) test
 
 validate-e2e:
 	python validate_system.py

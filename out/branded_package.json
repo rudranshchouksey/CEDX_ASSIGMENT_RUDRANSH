@@ -1,1 +1,21 @@
-[]
+[
+  {
+    "project": "Alpha",
+    "region": "EMEA"
+  },
+  {
+    "project": "Beta",
+    "region": "APAC"
+  },
+  {
+    "project": "Gamma"
+  },
+  {
+    "project": "Delta",
+    "region": "NA"
+  },
+  {
+    "project": "Epsilon"
+  },
+  "Dear Procurement Team,\n\nPlease find attached Invoice #INV-2026-0451 for consulting services\nrendered in Q2 2026.  Total amount: USD 34,500.00.\n\nPayment terms: Net 30 from invoice date.\n\nBest regards,\nVendor Finance Dept.\n"
+]

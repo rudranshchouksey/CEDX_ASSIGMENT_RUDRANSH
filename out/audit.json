@@ -5,14 +5,352 @@
     "verifier",
     "router"
   ],
-  "cost": 0,
+  "cost": 0.016662,
   "amendment": {
-    "case_id": "CEDX-TESTID",
-    "role": "legal_counsel",
-    "threshold": 15000,
-    "digest": "1cda3271c71af402ae278f8a477502104298c44909acc4001c830d90185c17d2"
+    "case_id": "CEDX-VERCEL-1234",
+    "role": "finance_controller",
+    "threshold": 16000,
+    "digest": "7384f82d261915e28f613055773702ef6d6101704ba1f71fb959af9ee7131b7a"
   },
-  "output_package_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
-  "events": [],
-  "agent_trace": {}
+  "output_package_hash": "76a85d955a4316310294fb378b7fa2317de519355c8efa22ede84c2eb8e16fb7",
+  "events": [
+    {
+      "seq": 0,
+      "event_type": "STATE_TRANSITION",
+      "timestamp": "2026-07-03T09:46:38.147746+00:00",
+      "details": {
+        "record_id": "REC-001",
+        "old_state": "draft",
+        "new_state": "in_review"
+      }
+    },
+    {
+      "seq": 1,
+      "event_type": "STATE_TRANSITION",
+      "timestamp": "2026-07-03T09:46:38.147827+00:00",
+      "details": {
+        "record_id": "REC-001",
+        "old_state": "in_review",
+        "new_state": "approved"
+      }
+    },
+    {
+      "seq": 2,
+      "event_type": "STATE_TRANSITION",
+      "timestamp": "2026-07-03T09:46:38.147871+00:00",
+      "details": {
+        "record_id": "REC-001",
+        "old_state": "approved",
+        "new_state": "delivered"
+      }
+    },
+    {
+      "seq": 3,
+      "event_type": "STATE_TRANSITION",
+      "timestamp": "2026-07-03T09:46:38.147904+00:00",
+      "details": {
+        "record_id": "REC-002",
+        "old_state": "draft",
+        "new_state": "in_review"
+      }
+    },
+    {
+      "seq": 4,
+      "event_type": "STATE_TRANSITION",
+      "timestamp": "2026-07-03T09:46:38.147924+00:00",
+      "details": {
+        "record_id": "REC-002",
+        "old_state": "in_review",
+        "new_state": "approved"
+      }
+    },
+    {
+      "seq": 5,
+      "event_type": "STATE_TRANSITION",
+      "timestamp": "2026-07-03T09:46:38.147994+00:00",
+      "details": {
+        "record_id": "REC-002",
+        "old_state": "approved",
+        "new_state": "delivered"
+      }
+    },
+    {
+      "seq": 6,
+      "event_type": "STATE_TRANSITION",
+      "timestamp": "2026-07-03T09:46:38.148015+00:00",
+      "details": {
+        "record_id": "REC-003",
+        "old_state": "draft",
+        "new_state": "in_review"
+      }
+    },
+    {
+      "seq": 7,
+      "event_type": "STATE_TRANSITION",
+      "timestamp": "2026-07-03T09:46:38.148030+00:00",
+      "details": {
+        "record_id": "REC-003",
+        "old_state": "in_review",
+        "new_state": "approved"
+      }
+    },
+    {
+      "seq": 8,
+      "event_type": "STATE_TRANSITION",
+      "timestamp": "2026-07-03T09:46:38.148057+00:00",
+      "details": {
+        "record_id": "REC-003",
+        "old_state": "approved",
+        "new_state": "delivered"
+      }
+    },
+    {
+      "seq": 9,
+      "event_type": "STATE_TRANSITION",
+      "timestamp": "2026-07-03T09:46:38.148078+00:00",
+      "details": {
+        "record_id": "REC-004",
+        "old_state": "draft",
+        "new_state": "in_review"
+      }
+    },
+    {
+      "seq": 10,
+      "event_type": "STATE_TRANSITION",
+      "timestamp": "2026-07-03T09:46:38.148092+00:00",
+      "details": {
+        "record_id": "REC-004",
+        "old_state": "in_review",
+        "new_state": "approved"
+      }
+    },
+    {
+      "seq": 11,
+      "event_type": "STATE_TRANSITION",
+      "timestamp": "2026-07-03T09:46:38.148119+00:00",
+      "details": {
+        "record_id": "REC-004",
+        "old_state": "approved",
+        "new_state": "delivered"
+      }
+    },
+    {
+      "seq": 12,
+      "event_type": "STATE_TRANSITION",
+      "timestamp": "2026-07-03T09:46:38.148145+00:00",
+      "details": {
+        "record_id": "REC-005",
+        "old_state": "draft",
+        "new_state": "in_review"
+      }
+    },
+    {
+      "seq": 13,
+      "event_type": "STATE_TRANSITION",
+      "timestamp": "2026-07-03T09:46:38.148167+00:00",
+      "details": {
+        "record_id": "REC-005",
+        "old_state": "in_review",
+        "new_state": "approved"
+      }
+    },
+    {
+      "seq": 14,
+      "event_type": "STATE_TRANSITION",
+      "timestamp": "2026-07-03T09:46:38.148191+00:00",
+      "details": {
+        "record_id": "REC-005",
+        "old_state": "approved",
+        "new_state": "delivered"
+      }
+    },
+    {
+      "seq": 15,
+      "event_type": "STATE_TRANSITION",
+      "timestamp": "2026-07-03T09:46:38.148209+00:00",
+      "details": {
+        "record_id": "eml-test-001@vendor.example",
+        "old_state": "draft",
+        "new_state": "in_review"
+      }
+    },
+    {
+      "seq": 16,
+      "event_type": "STATE_TRANSITION",
+      "timestamp": "2026-07-03T09:46:38.148219+00:00",
+      "details": {
+        "record_id": "eml-test-001@vendor.example",
+        "old_state": "in_review",
+        "new_state": "approved"
+      }
+    },
+    {
+      "seq": 17,
+      "event_type": "STATE_TRANSITION",
+      "timestamp": "2026-07-03T09:46:38.148233+00:00",
+      "details": {
+        "record_id": "eml-test-001@vendor.example",
+        "old_state": "approved",
+        "new_state": "delivered"
+      }
+    }
+  ],
+  "agent_trace": {
+    "REC-001": [
+      {
+        "agent": "worker",
+        "model": "gpt-4o-mini",
+        "prompt_version": "1.0.0",
+        "tokens_in": 84,
+        "tokens_out": 59,
+        "cost_usd": 0.000286,
+        "latency_ms": 0.08,
+        "retries": 0,
+        "status": "success",
+        "verdict": null
+      },
+      {
+        "agent": "verifier",
+        "model": "claude-sonnet-4",
+        "prompt_version": "1.0.0",
+        "tokens_in": 141,
+        "tokens_out": 17,
+        "cost_usd": 0.001896,
+        "latency_ms": 0.01,
+        "retries": 0,
+        "status": "success",
+        "verdict": "pass"
+      }
+    ],
+    "REC-002": [
+      {
+        "agent": "worker",
+        "model": "gemini-1.5-flash",
+        "prompt_version": "1.0.0",
+        "tokens_in": 82,
+        "tokens_out": 58,
+        "cost_usd": 0.00014,
+        "latency_ms": 0.03,
+        "retries": 0,
+        "status": "success",
+        "verdict": null
+      },
+      {
+        "agent": "verifier",
+        "model": "claude-sonnet-4",
+        "prompt_version": "1.0.0",
+        "tokens_in": 139,
+        "tokens_out": 17,
+        "cost_usd": 0.001872,
+        "latency_ms": 0.01,
+        "retries": 0,
+        "status": "success",
+        "verdict": "pass"
+      }
+    ],
+    "REC-003": [
+      {
+        "agent": "worker",
+        "model": "gemini-1.5-pro",
+        "prompt_version": "1.0.0",
+        "tokens_in": 97,
+        "tokens_out": 55,
+        "cost_usd": 0.001216,
+        "latency_ms": 0.04,
+        "retries": 0,
+        "status": "success",
+        "verdict": null
+      },
+      {
+        "agent": "verifier",
+        "model": "claude-sonnet-4",
+        "prompt_version": "1.0.0",
+        "tokens_in": 133,
+        "tokens_out": 17,
+        "cost_usd": 0.0018,
+        "latency_ms": 0.01,
+        "retries": 0,
+        "status": "success",
+        "verdict": "pass"
+      }
+    ],
+    "REC-004": [
+      {
+        "agent": "worker",
+        "model": "gpt-4o-mini",
+        "prompt_version": "1.0.0",
+        "tokens_in": 85,
+        "tokens_out": 59,
+        "cost_usd": 0.000288,
+        "latency_ms": 0.05,
+        "retries": 0,
+        "status": "success",
+        "verdict": null
+      },
+      {
+        "agent": "verifier",
+        "model": "claude-sonnet-4",
+        "prompt_version": "1.0.0",
+        "tokens_in": 142,
+        "tokens_out": 17,
+        "cost_usd": 0.001908,
+        "latency_ms": 0.01,
+        "retries": 0,
+        "status": "success",
+        "verdict": "pass"
+      }
+    ],
+    "REC-005": [
+      {
+        "agent": "worker",
+        "model": "gemini-1.5-pro",
+        "prompt_version": "1.0.0",
+        "tokens_in": 98,
+        "tokens_out": 59,
+        "cost_usd": 0.001256,
+        "latency_ms": 0.05,
+        "retries": 0,
+        "status": "success",
+        "verdict": null
+      },
+      {
+        "agent": "verifier",
+        "model": "claude-sonnet-4",
+        "prompt_version": "1.0.0",
+        "tokens_in": 143,
+        "tokens_out": 17,
+        "cost_usd": 0.00192,
+        "latency_ms": 0.01,
+        "retries": 0,
+        "status": "success",
+        "verdict": "pass"
+      }
+    ],
+    "eml-test-001@vendor.example": [
+      {
+        "agent": "worker",
+        "model": "gemini-1.5-pro",
+        "prompt_version": "1.0.0",
+        "tokens_in": 104,
+        "tokens_out": 67,
+        "cost_usd": 0.001368,
+        "latency_ms": 0.06,
+        "retries": 0,
+        "status": "success",
+        "verdict": null
+      },
+      {
+        "agent": "verifier",
+        "model": "claude-sonnet-4",
+        "prompt_version": "1.0.0",
+        "tokens_in": 209,
+        "tokens_out": 17,
+        "cost_usd": 0.002712,
+        "latency_ms": 0.01,
+        "retries": 0,
+        "status": "success",
+        "verdict": "pass"
+      }
+    ]
+  }
 }
