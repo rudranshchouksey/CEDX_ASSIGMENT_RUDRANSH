@@ -8,6 +8,7 @@ from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from cedx_pipeline.amendment import Amendment, init_amendment
@@ -18,6 +19,14 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="CEDX Governance API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # ── In-Memory State Mocking for Serverless Runtime ────────────────────────────
 
@@ -55,7 +64,7 @@ def bootstrap_state():
                 ]
             },
             "REC-002": {
-                "id": "REC-002", "state": ReviewState.CHANGES_REQUESTED.value, "amount": 100.0, 
+                "id": "REC-002", "state": ReviewState.IN_REVIEW.value, "amount": 100.0, 
                 "reason_codes": [],
                 "lineage": {"owner": "Bob", "deadline": "2026-11-15", "source_format": "pdf", "source_hash": "f9e8d7c6"},
                 "agent_trace": [
@@ -232,10 +241,5 @@ async def review_record(payload: ReviewAction):
     return {"status": "success", "record": record_data}
 
 
-@app.get("/", response_class=HTMLResponse)
-async def serve_dashboard():
-    dashboard_path = Path(__file__).parent / "dashboard.html"
-    if dashboard_path.exists():
-        return dashboard_path.read_text(encoding="utf-8")
-    return "<h1>Dashboard UI missing</h1>"
+
 
