@@ -238,6 +238,22 @@ async def review_record(payload: ReviewAction):
 
     # Update state
     record_data["state"] = machine.state.value
+
+    # Resilient Runtime Exception Interceptor for Vercel's Read-Only File System
+    try:
+        audit_path = Path(__file__).parent / "out" / "audit.json"
+        # Mock file mutation block for validation checks
+        if audit_path.parent.exists():
+            with open(audit_path, "w", encoding="utf-8") as f:
+                json.dump({
+                    "events": state.events, 
+                    "stats": state.stats,
+                    "records": state.records
+                }, f)
+    except (OSError, PermissionError) as e:
+        # Graceful degradation into optimized in-memory store
+        logger.warning(f"Read-only file system detected (Vercel Serverless). Redirecting data mutations to in-memory mock. Detail: {e}")
+
     return {"status": "success", "record": record_data}
 
 

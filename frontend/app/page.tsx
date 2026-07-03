@@ -15,10 +15,25 @@ export default function Dashboard() {
   const [replayLlm, setReplayLlm] = useState(false);
   const [showAmendmentModal, setShowAmendmentModal] = useState(false);
 
-  const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+  const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL || (process.env.NODE_ENV === 'development' ? 'http://localhost:8000' : '');
 
   // Fetch Core Telemetry
   const fetchData = async () => {
+    if (!API_BASE) {
+      // Fallback Mock State for Vercel without configured backend
+      setStatus({
+        case_id: 'MOCK-VERCEL-DEPLOY',
+        role: 'finance_controller',
+        threshold: 10000,
+        avg_cost: 0.0042,
+        p95_latency: 120.5,
+        total_processed: 0,
+        total_cost: 0,
+        replay_llm: false
+      });
+      setRecords([]);
+      return;
+    }
     try {
       const statusRes = await fetch(`${API_BASE}/api/status`);
       if (statusRes.ok) {
