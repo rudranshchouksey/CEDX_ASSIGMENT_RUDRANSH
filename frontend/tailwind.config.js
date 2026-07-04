@@ -18,7 +18,7 @@ module.exports = {
         slate500: '#64748b',
       },
       fontFamily: {
-        sans: ['Inter', 'Geist', 'SF Pro Display', 'sans-serif'],
+        sans: ['var(--font-inter)', 'sans-serif'],
       },
       boxShadow: {
         'premium': '0 1px 2px rgba(0, 0, 0, 0.02), 0 4px 6px -1px rgba(0, 0, 0, 0.01)',
